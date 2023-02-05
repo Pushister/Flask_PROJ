@@ -27,14 +27,11 @@ class UserName(Base):
     id = Column(Integer, primary_key=True, unique=True)
     username = Column(String(50))
     password = Column(String(120))
-    email = Column(String(120))
 
     def __init__(self, username, password, email=None, first_name=None, surname=None):
         self.username = username
         self.password = password
         self.email = email
-        self.first_name = first_name
-        self.surname = surname
 
     def __repr__(self):
         return f'<User{self.username!r}>'

@@ -33,5 +33,16 @@ def get_privatbank_data():
                                         buy_rate=purchaseRate_currency,
                                         sale_rate=saleRate_currency
                                         )
+
                 session.add(record)
                 session.commit()
+
+        UAH = models_db.User(
+            bank='PrivatBank',
+            currency='UAH',
+            date_exchange=db_date,
+            buy_rate=1 / purchaseRate_USD,
+            sale_rate=1 / saleRate_USD,
+        )
+        session.add(UAH)
+        session.commit()

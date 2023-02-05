@@ -7,57 +7,58 @@ import models_db
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+#from flask.ext.session import Session as FlaskSession
+from flask import session as flask_session
+
 app = Flask(__name__)
+app.secret_key ='supersecret'
 
 
 @app.route("/", methods=['GET', 'POST'])
 def login_user():
-    if request.method == 'GET':
+    if request.method == 'POST':
         with Session(al_db.engine) as session:
-            query = select(models_db.User)
+            query = select(models_db.UserName)
             result = session.execute(query).fetchall()
-        return str(result)
-        #conn = al_db.engine.connect()
-        #res_1 = select([models_db.User])
-        #result = conn.execute(res_1)
-        #data_res = result.fetchall()
-        #print(result)
-        #pass
+            if result:
+                flask_session['username'] = request.form['username']
+            else:
+                return render_template('index.html', username="No user found")
+            return render_template('index.html', username=flask_session['username'])
     else:
-        pass
-    return "OK"
+        return render_template('login.html')
 
 
 @app.route("/logout", methods=['GET'])
 def logout():
-    get_bank_data_task()
+    flask_session.pop('username', None)
     return "Logout"
 
 
 @app.route("/register", methods=['GET', 'POST'])
 def register():
-
-    if request.method == 'POST':
-        username = request.form['username']
-        password = request.form['psw']
-        email = request.form['email']
-
-        with Session(al_db.engine) as session:
-            record = models_db.UserName(username=username,
-                                        password=password,
-                                        email=email
-                                        )
-            session.add(record)
-            session.commit()
-
-        return "Thank you"
-
-    return render_template('registr_form.html')
-
+    #
+    # if request.method == 'POST':
+    #     username = request.form['username']
+    #     password = request.form['password']
+    #
+    #     with Session(al_db.engine) as session:
+    #         record = models_db.UserName(username=username,
+    #                                     password=password,
+    #                                     )
+    #         session.add(record)
+    #         session.commit()
+    #
+    #     return f"Thank you {username}"
+    #
+    # return render_template('login.html')
+    return 'Registration form'
 
 @app.route("/user_page", methods=['GET'])
-def user_page():
-    return "OK"
+def index():
+    if 'username' in flask_session:
+        return f'Logged in as {flask_session["username"]}'
+    return 'You are not logged in'
 
 
 @app.route("/currency", methods=['GET', 'POST'])
@@ -80,14 +81,6 @@ def currency_converter():
                                                            date_exchange=user_date)
             currency_2 = session.scalars(statement_2).first()
 
-        #with DBManager() as db:
-        #    buy_rate_1, sale_rate_1 = db.get_result(f'SELECT buy_rate, sale_rate FROM currency WHERE '
-        #                                            f'bank = "{user_bank}" and date_excange = '
-        #                                            f'"{user_date}" and currency = "{user_currency_1}"')
-        #    buy_rate_2, sale_rate_2 = db.get_result(f'SELECT buy_rate, sale_rate FROM currency WHERE '
-        #                                            f'bank = "{user_bank}" and date_excange = '
-        #                                            f'"{user_date}" and currency = "{user_currency_2}"')
-
         buy_rate_1, sale_rate_1 = currency_1.buy_rate, currency_1.sale_rate
         buy_rate_2, sale_rate_2 = currency_2.buy_rate, currency_2.sale_rate
         cur_exchange_buy = float(buy_rate_2) / float(buy_rate_1)
@@ -97,10 +90,11 @@ def currency_converter():
                                cur_excange_buy=cur_exchange_buy,
                                cur_excange_sale=cur_exchange_sale,
                                user_currency_1=user_currency_1,
-                               user_currency_2=user_currency_2
+                               user_currency_2=user_currency_2,
+                               username=flask_session['username']
                                )
     else:
-        return render_template('data_form.html')
+        return render_template('data_form.html', username=flask_session['username'])
 
 
 if __name__ == '__main__':
